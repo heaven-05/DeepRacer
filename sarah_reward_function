@@ -1,0 +1,65 @@
+ def reward_functions(params): 
+    track_width = params['track_width']
+    distance_from_center = params['distance_from_center']
+    reward = 1e-3
+    car_speed = params['speed']
+    car_speed = 2.0
+    car_steering = params['steering_angle']
+    car_steps = params['steps']
+    progress = params['progress']
+    abs_steering = abs(car_steering)
+
+    # Total num of steps we want the car to finish the lap, it will vary depends on the track length
+    TOTAL_NUM_STEPS = 300
+
+    
+    min_speed = 2.5
+
+    # Calculate 3 markers that are at varying distances away from the center line
+    marker_1 = 0.1 * track_width
+    marker_2 = 0.25 * track_width
+    marker_3 = 0.5 * track_width
+    
+    if ((car_steps% 100) == 0) and (progress>((car_steps/TOTAL_NUM_STEPS)*100)):
+        reward +=15.0
+
+    # Give higher reward if the car is closer to center line and vice versa
+    if distance_from_center <= marker_1:
+        reward += 5.0
+        car_speed += 3.0
+    elif distance_from_center <= marker_2:
+        reward += 2.5
+        car_speed +=1.5
+    elif distance_from_center <= marker_3:
+        reward += 1
+        car_speed +=2.0
+    else:
+        reward = 1e-3 # likely crashed/ close to off track
+   
+    # Read input parameters
+    all_wheels_on_track = params['all_wheels_on_track']
+   
+    # Give a high reward if no wheels go off the track and 
+    # the car is somewhere in between the track borders 
+    if all_wheels_on_track and (0.5*track_width - distance_from_center) >= 0.05:
+        reward += 10.0
+        speed +=5.0
+        
+ #  if car_steering == 0:
+ #       car_speed +=5.0
+    if car_speed < min_speed:
+        reward -=2.0
+        
+    if all_wheels_on_track and (car_steps>0):
+        reward = ((progress/car_steps) * 100) + (car_speed**2)
+    else:
+        reward = 0.01
+    
+    ABS_STEERING_THRESHOLD = 20.0
+    
+    if abs_steering > ABS_STEERING_THRESHOLD:
+        reward *= 0.5
+
+    # Always return a float value
+
+    return float(reward)
